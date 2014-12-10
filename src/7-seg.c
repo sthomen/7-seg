@@ -89,6 +89,10 @@ static void window_main_load(Window *window)
 
 	seg_hor	= gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	seg_vert = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
+
+	/* prep clock */
+	t=time(NULL);
+	now=localtime(&t);
 }
 
 static void window_main_unload(Window *window)
