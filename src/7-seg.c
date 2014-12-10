@@ -8,6 +8,8 @@ static Layer *colon_layer;
 
 static GBitmap *seg_hor;
 static GBitmap *seg_vert;
+static GBitmap *seg_hor_dark;
+static GBitmap *seg_vert_dark;
 
 static bool blink=false;
 
@@ -46,6 +48,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 {
 	int d, i, j;
 	char *digit;
+	GBitmap *seg;
 
 	char time[5]="LoAd";
 
@@ -68,16 +71,22 @@ static void update_time_layer(Layer *this, GContext *ctx)
 		for (i=0;i<3;i++) {		// columns
 			for (j=0;j<3;j++) {	// rows
 				if (j==1) {
-					if (digit[j+(i*3)]==1) 
-						graphics_draw_bitmap_in_rect(ctx, seg_hor,
-							GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
-								seg_hor->bounds.size.w,seg_hor->bounds.size.h));
+					if (digit[j+(i*3)]==1) {
+						seg=seg_hor;
+					} else {
+						seg=seg_hor_dark;
+					}
 				} else {
-					if (digit[j+(i*3)]==1) 
-						graphics_draw_bitmap_in_rect(ctx, seg_vert,
-							GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
-								seg_vert->bounds.size.w,seg_vert->bounds.size.h));
+					if (digit[j+(i*3)]==1) {
+						seg=seg_vert;
+					} else {
+						seg=seg_vert_dark;
+					}
 				}
+				if (!(i==0 && (j==0 || j==2)))
+					graphics_draw_bitmap_in_rect(ctx, seg,
+						GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
+							seg->bounds.size.w,seg->bounds.size.h));
 			}
 		}
 	}
@@ -89,6 +98,8 @@ static void window_main_load(Window *window)
 
 	seg_hor	= gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	seg_vert = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
+	seg_hor_dark = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_DARK_SEGMENT);
+	seg_vert_dark = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_DARK_SEGMENT);
 
 	/* prep clock */
 	t=time(NULL);
