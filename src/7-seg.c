@@ -1,5 +1,6 @@
 #include <pebble.h>
 #include "debug.h"
+#include "chars.h"
 
 static Window *window_main;
 static Layer *time_layer;
@@ -8,8 +9,6 @@ static GBitmap *seg_hor;
 static GBitmap *seg_vert;
 
 struct tm *now=NULL;
-
-extern char *get_number(char which);
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {

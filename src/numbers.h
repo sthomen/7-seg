@@ -1,5 +1,5 @@
-#ifndef _NUMBERS_H_
-#define _NUMBERS_H_
+#ifndef NUMBERS_H
+#define NUMBERS_H
 
 /*
  *  7 segment encoding
@@ -48,4 +48,4 @@ struct segsVII {
 };
 #define SEGVII_MAX 10
 
-#endif /* _NUMBERS_H_ */
+#endif /* NUMBERS_H */
