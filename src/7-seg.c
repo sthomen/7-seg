@@ -40,6 +40,9 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 
 		blink=false;
 	} else {
+		graphics_draw_bitmap_in_rect(ctx, seg_hor_dark, GRect(-4,0,12,8));
+		graphics_draw_bitmap_in_rect(ctx, seg_hor_dark, GRect(-4,18,12,8));
+
 		blink=true;
 	}
 }
