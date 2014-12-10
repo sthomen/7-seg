@@ -2,7 +2,7 @@
 #include "debug.h"
 #include "numbers.h"
 
-char *get_number(char which)
+char *get_7seg_number(char which)
 {
 	int i;
 

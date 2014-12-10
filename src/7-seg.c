@@ -36,7 +36,9 @@ static void update_time_layer(Layer *this, GContext *ctx)
 	static int voffsets[9]={0,0,0,4,32,4,36,64,36};
 
 	for (d=0;d<4;d++) {			// digit
-		digit=get_number(time[d]);
+		digit=get_7seg_number(time[d]);
+		if (digit==NULL)
+			continue;
 
 		for (i=0;i<3;i++) {		// columns
 			for (j=0;j<3;j++) {	// rows
