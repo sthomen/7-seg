@@ -44,11 +44,13 @@ static void update_time_layer(Layer *this, GContext *ctx)
 				if (j==1) {
 					if (digit[j+(i*3)]==1) 
 						graphics_draw_bitmap_in_rect(ctx, seg_hor,
-							GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],26,5));
+							GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
+								seg_hor->bounds.size.w,seg_hor->bounds.size.h));
 				} else {
 					if (digit[j+(i*3)]==1) 
 						graphics_draw_bitmap_in_rect(ctx, seg_vert,
-							GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],5,29));
+							GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
+								seg_vert->bounds.size.w,seg_vert->bounds.size.h));
 				}
 			}
 		}
@@ -98,3 +100,4 @@ int main(void) {
 	app_event_loop();
 	deinit();
 }
+
