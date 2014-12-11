@@ -64,7 +64,9 @@ static void update_time_layer(Layer *this, GContext *ctx)
 	int choffsets[4]={1,34,80,113};
 	// offsets relative to character
 	static int hoffsets[3]={0,4,25};
-	static int voffsets[9]={0,0,0,4,32,4,36,64,36};
+	static int voffsets[9]={ 0, 0, 0,
+				 4,32, 4,
+				36,64,36};
 
 	for (d=0;d<4;d++) {			// digit
 		digit=get_7seg_number(time[d]);
