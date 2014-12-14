@@ -1,8 +1,8 @@
 #include <pebble.h>
 #include "debug.h"
-#include "characters.h"
+#include "numbers.h"
 
-char *get_segment(char which)
+char *get_7seg_number(char which)
 {
 	int i;
 
