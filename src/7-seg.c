@@ -7,6 +7,16 @@ static Layer *time_layer;
 static Layer *colon_layer;
 static Layer *date_layer;
 
+static char *datestr[7]={
+	"Sun",
+	"Mon",
+	"Tue",
+	"Wed",
+	"Thu",
+	"Fri",
+	"Sat"
+};
+
 struct segs_seven {
 	GBitmap *horizontal;
 	GBitmap *vertical;
@@ -60,6 +70,10 @@ static void update_date_layer(Layer *this, GContext *ctx)
 	char *digit;
 	struct segs_fourteen *sf;
 	GBitmap *seg;
+
+	if (now!=NULL) {
+		snprintf(date, 7, "%s%2d", datestr[now->tm_wday], now->tm_mday);
+	}
 
 	/*       0
 	 * 1  2  3  4  5
