@@ -30,8 +30,43 @@
      },
      {
       "type": "png",
+      "name": "",
+      "file": "vertical_dark_segment.png"
+     },
+     {
+      "type": "png",
       "name": "VERTICAL_DARK_SEGMENT",
       "file": "vertical_dark_segment.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_TOP",
+      "file": "small_segment_top.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_SIDE",
+      "file": "small_segment_side.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_DIAGONAL_LEFT",
+      "file": "small_segment_diagonal_left.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_DIAGONAL_RIGHT",
+      "file": "small_segment_diagonal_right.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_VERTICAL",
+      "file": "small_segment_vertical.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_HORIZONTAL",
+      "file": "small_segment_horizontal.png"
      }
     ]
   }

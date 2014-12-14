@@ -11,10 +11,10 @@
  *
  */
 
-struct segsVII {
+struct {
 	char character;
 	char data[3][3];
-} numbers[] = {
+} segment_7[] = {
 	{ '0', {	{0,1,0},
 			{1,0,1},
 			{1,1,1}}},
