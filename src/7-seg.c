@@ -7,21 +7,27 @@ static Layer *time_layer;
 static Layer *colon_layer;
 static Layer *date_layer;
 
+struct segs_seven {
+	GBitmap *horizontal;
+	GBitmap *vertical;
+	GBitmap *horizontal_dark;
+	GBitmap *vertical_dark;
+};
+
+struct segs_fourteen {
+	GBitmap *top;
+	GBitmap *side;
+	GBitmap *diagonal_left;
+	GBitmap *diagonal_right;
+	GBitmap *vertical;
+	GBitmap *horizontal;
+};
+
 struct {
-	struct {
-		GBitmap *horizontal;
-		GBitmap *vertical;
-		GBitmap *horizontal_dark;
-		GBitmap *vertical_dark;
-	} seven;
-	struct {
-		GBitmap *top;
-		GBitmap *side;
-		GBitmap *diagonal_left;
-		GBitmap *diagonal_right;
-		GBitmap *vertical;
-		GBitmap *horizontal;
-	} fourteen;
+	struct segs_seven seven;
+	struct segs_seven seven_dark;
+	struct segs_fourteen fourteen;
+	struct segs_fourteen fourteen_dark;
 } segs;
 
 static bool blink=false;
@@ -52,6 +58,7 @@ static void update_date_layer(Layer *this, GContext *ctx)
 	char date[6]="Hello";
 
 	char *digit;
+	struct segs_fourteen *sf;
 	GBitmap *seg;
 
 	/*       0
@@ -71,38 +78,44 @@ static void update_date_layer(Layer *this, GContext *ctx)
 			return;
 
 		for (i=0;i<14;i++) {
+			if (digit[i]==1) {
+				sf=&segs.fourteen;
+			} else {
+				sf=&segs.fourteen_dark;
+			}
+
 			switch (i) {
 				case 0:
 				case 13:
-					seg=segs.fourteen.top;
+					seg=sf->top;
 					break;
 				case 1:
 				case 5:
 				case 8:
 				case 12:
-					seg=segs.fourteen.side;
+					seg=sf->side;
 					break;
 				case 2:
 				case 11:
-					seg=segs.fourteen.diagonal_left;
+					seg=sf->diagonal_left;
 					break;
 				case 4:
 				case 9:
-					seg=segs.fourteen.diagonal_right;
+					seg=sf->diagonal_right;
 					break;
 				case 3:
 				case 10:
-					seg=segs.fourteen.vertical;
+					seg=sf->vertical;
 					break;
 				case 6:
 				case 7:
-					seg=segs.fourteen.horizontal;
+					seg=sf->horizontal;
 					break;
 			}
-			if (digit[i]==1)
-				graphics_draw_bitmap_in_rect(ctx, seg,
-					GRect(choffsets[d]+hoffsets[i],voffsets[i],
-						seg->bounds.size.w,seg->bounds.size.h));
+
+			graphics_draw_bitmap_in_rect(ctx, seg,
+				GRect(choffsets[d]+hoffsets[i],voffsets[i],
+					seg->bounds.size.w,seg->bounds.size.h));
 		}
 	}
 }
@@ -117,8 +130,8 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 
 		blink=false;
 	} else {
-		graphics_draw_bitmap_in_rect(ctx, segs.seven.horizontal_dark, GRect(-4,0,12,8));
-		graphics_draw_bitmap_in_rect(ctx, segs.seven.horizontal_dark, GRect(-4,18,12,8));
+		graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
+		graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,18,12,8));
 
 		blink=true;
 	}
@@ -128,6 +141,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 {
 	int d, i, j;
 	char *digit;
+	struct segs_seven *ss;
 	GBitmap *seg;
 
 	char time[5]="LoAd";
@@ -150,18 +164,15 @@ static void update_time_layer(Layer *this, GContext *ctx)
 
 		for (i=0;i<3;i++) {		// columns
 			for (j=0;j<3;j++) {	// rows
-				if (j==1) {
-					if (digit[j+(i*3)]==1) {
-						seg=segs.seven.horizontal;
-					} else {
-						seg=segs.seven.horizontal_dark;
-					}
+				if (digit[j+(i*3)]==1) {
+					ss=&segs.seven;
 				} else {
-					if (digit[j+(i*3)]==1) {
-						seg=segs.seven.vertical;
-					} else {
-						seg=segs.seven.vertical_dark;
-					}
+					ss=&segs.seven_dark;
+				}
+				if (j==1) {
+					seg=ss->horizontal;
+				} else {
+					seg=ss->vertical;
 				}
 				if (!(i==0 && (j==0 || j==2)))
 					graphics_draw_bitmap_in_rect(ctx, seg,
@@ -178,8 +189,8 @@ static void window_main_load(Window *window)
 
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
-	segs.seven.horizontal_dark = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_DARK_SEGMENT);
-	segs.seven.vertical_dark = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_DARK_SEGMENT);
+	segs.seven_dark.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_DARK_SEGMENT);
+	segs.seven_dark.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_DARK_SEGMENT);
 
 	segs.fourteen.top = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_TOP);
 	segs.fourteen.side = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_SIDE);
@@ -187,6 +198,13 @@ static void window_main_load(Window *window)
 	segs.fourteen.diagonal_right = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_DIAGONAL_RIGHT);
 	segs.fourteen.vertical = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_VERTICAL);
 	segs.fourteen.horizontal = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_HORIZONTAL);
+
+	segs.fourteen_dark.top = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_TOP_DARK);
+	segs.fourteen_dark.side = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_SIDE_DARK);
+	segs.fourteen_dark.diagonal_left = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_DIAGONAL_LEFT_DARK);
+	segs.fourteen_dark.diagonal_right = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_DIAGONAL_RIGHT_DARK);
+	segs.fourteen_dark.vertical = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_VERTICAL_DARK);
+	segs.fourteen_dark.horizontal = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_HORIZONTAL_DARK);
 
 	/* prep clock */
 	t=time(NULL);

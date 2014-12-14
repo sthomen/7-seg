@@ -30,11 +30,6 @@
      },
      {
       "type": "png",
-      "name": "",
-      "file": "vertical_dark_segment.png"
-     },
-     {
-      "type": "png",
       "name": "VERTICAL_DARK_SEGMENT",
       "file": "vertical_dark_segment.png"
      },
@@ -67,6 +62,36 @@
       "type": "png",
       "name": "14SEGMENT_HORIZONTAL",
       "file": "small_segment_horizontal.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_TOP_DARK",
+      "file": "small_segment_top_dark.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_SIDE_DARK",
+      "file": "small_segment_side_dark.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_DIAGONAL_LEFT_DARK",
+      "file": "small_segment_diagonal_left_dark.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_DIAGONAL_RIGHT_DARK",
+      "file": "small_segment_diagonal_right_dark.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_VERTICAL_DARK",
+      "file": "small_segment_vertical_dark.png"
+     },
+     {
+      "type": "png",
+      "name": "14SEGMENT_HORIZONTAL_DARK",
+      "file": "small_segment_horizontal_dark.png"
      }
     ]
   }
