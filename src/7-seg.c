@@ -161,7 +161,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 	char time[5]="LoAd";
 
 	if (now!=NULL) {
-		snprintf(time, 5, "%02d%02d", (clock_is_24h_style() ? now->tm_hour : now->tm_hour % 12),
+		snprintf(time, 5, "%2d%02d", (clock_is_24h_style() ? now->tm_hour : now->tm_hour % 12),
 			now->tm_min);
 	}
 
