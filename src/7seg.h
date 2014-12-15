@@ -77,8 +77,11 @@ struct {
 			{1,1,1}}},
 	{ '-', {	{0,0,0},
 			{0,1,0},
+			{0,0,0}}},
+	{ ' ', {	{0,0,0},
+			{0,0,0},
 			{0,0,0}}}
 };
-#define SEGVII_MAX 21
+#define SEGVII_MAX 22
 
 #endif /* NUMBERS_H */
