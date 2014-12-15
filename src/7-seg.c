@@ -6,6 +6,12 @@ static Window *window_main;
 static Layer *time_layer;
 static Layer *colon_layer;
 static Layer *date_layer;
+static InverterLayer *invert_layer;
+
+enum {	/* these must match constants in appinfo */
+	CONFIG_INVERT = 0,
+	CONFIG_HALFTONE = 1
+};
 
 static char *datestr[7]={
 	"Sun",
@@ -40,9 +46,54 @@ struct {
 	struct segs_fourteen fourteen_dark;
 } segs;
 
+static bool halftone=true;
 static bool blink=false;
-
 struct tm *now=NULL;
+
+static void set_invert(bool which) {
+	layer_set_hidden(inverter_layer_get_layer(invert_layer), !which);	// because the layer inverts
+	layer_mark_dirty(inverter_layer_get_layer(invert_layer));
+
+	persist_write_int(CONFIG_INVERT, (which ? 1 : 0));
+}
+
+static void set_halftone(bool which) {
+	halftone=which;
+
+	layer_mark_dirty(colon_layer);
+	layer_mark_dirty(time_layer);
+	layer_mark_dirty(date_layer);
+
+	persist_write_int(CONFIG_HALFTONE, (which ? 0 : 1));
+}
+
+
+static void message_in_handler(DictionaryIterator *iter, void *context)
+{
+	Tuple *t = dict_read_first(iter);
+
+	while (t != NULL) {
+		switch (t->key) {
+			case CONFIG_INVERT:
+				DEBUG_INFO("INVERT: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_invert(true);
+				} else {
+					set_invert(false);
+				}
+				break;
+			case CONFIG_HALFTONE:
+				DEBUG_INFO("HALFTONE: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_halftone(true);
+				} else {
+					set_halftone(false);
+				}
+				break;
+		}
+		t=dict_read_next(iter);
+	}
+}
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {
@@ -95,6 +146,9 @@ static void update_date_layer(Layer *this, GContext *ctx)
 			if (digit[i]==1) {
 				sf=&segs.fourteen;
 			} else {
+				if (!halftone) {
+					continue;
+				}
 				sf=&segs.fourteen_dark;
 			}
 
@@ -144,8 +198,10 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 
 		blink=false;
 	} else {
-		graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
-		graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,18,12,8));
+		if (halftone) {
+			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
+			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,18,12,8));
+		}
 
 		blink=true;
 	}
@@ -181,6 +237,9 @@ static void update_time_layer(Layer *this, GContext *ctx)
 				if (digit[j+(i*3)]==1) {
 					ss=&segs.seven;
 				} else {
+					if (!halftone) {
+						continue;
+					}
 					ss=&segs.seven_dark;
 				}
 				if (j==1) {
@@ -200,6 +259,33 @@ static void update_time_layer(Layer *this, GContext *ctx)
 static void window_main_load(Window *window)
 {
 	time_t t;
+
+	/* setup time layer */
+	time_layer = layer_create(GRect(0,50,144,69));
+
+	layer_add_child(window_get_root_layer(window_main), time_layer);
+	layer_set_update_proc(time_layer, update_time_layer);
+
+	/* setup colon layer */
+	colon_layer = layer_create(GRect(68,71,8,26));
+
+	layer_add_child(window_get_root_layer(window_main), colon_layer);
+	layer_set_update_proc(colon_layer, update_colon_layer);
+
+	/* setup date layer */
+	date_layer = layer_create(GRect(0,10,144,25));
+
+	layer_add_child(window_get_root_layer(window_main), date_layer);
+	layer_set_update_proc(date_layer, update_date_layer);
+
+	/* inversion layer */
+	invert_layer = inverter_layer_create(GRect(0,0,144,168));
+	layer_add_child(window_get_root_layer(window_main), inverter_layer_get_layer(invert_layer));
+
+	/* XXX since 0 is the default if no value is set, make this the same in the js */
+	set_invert((persist_read_int(CONFIG_INVERT)==0 ? false : true));
+
+	set_halftone((persist_read_int(CONFIG_HALFTONE)==0 ? true : false));
 
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
@@ -230,6 +316,7 @@ static void window_main_unload(Window *window)
 	layer_destroy(time_layer);
 	layer_destroy(colon_layer);
 	layer_destroy(date_layer);
+	layer_destroy(inverter_layer_get_layer(invert_layer));
 }
 
 static void init()
@@ -248,29 +335,15 @@ static void init()
 
 	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
 
-	/* setup time layer */
-	time_layer = layer_create(GRect(0,50,144,69));
-
-	layer_add_child(window_get_root_layer(window_main), time_layer);
-	layer_set_update_proc(time_layer, update_time_layer);
-
-	/* setup colon layer */
-	colon_layer = layer_create(GRect(68,71,8,26));
-
-	layer_add_child(window_get_root_layer(window_main), colon_layer);
-	layer_set_update_proc(colon_layer, update_colon_layer);
-
-	/* setup date layer */
-	date_layer = layer_create(GRect(0,10,144,25));
-
-	layer_add_child(window_get_root_layer(window_main), date_layer);
-	layer_set_update_proc(date_layer, update_date_layer);
+	app_message_register_inbox_received(message_in_handler);
+	app_message_open(64, 64);
 }
 
 static void deinit()
 {
 	tick_timer_service_unsubscribe();
 	window_destroy(window_main);
+	app_message_deregister_callbacks();
 }
 
 int main(void) {

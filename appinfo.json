@@ -2,6 +2,7 @@
   "uuid": "c15841cc-14f8-49a9-9541-d181375db705",
   "shortName": "7 Seg",
   "longName": "7 Segment Display",
+  "capabilities": [ "configurable" ],
   "companyName": "Staffan Thomen",
   "versionCode": 1,
   "versionLabel": "1.0",
@@ -9,7 +10,8 @@
     "watchface": true
   },
   "appKeys": {
-    "dummy": 0
+    "invert": 0,
+    "halftone": 1
   },
   "resources": {
     "media": [
