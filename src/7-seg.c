@@ -13,16 +13,6 @@ enum {	/* these must match constants in appinfo */
 	CONFIG_HALFTONE = 1
 };
 
-static char *datestr[7]={
-	"Sun",
-	"Mon",
-	"Tue",
-	"Wed",
-	"Thu",
-	"Fri",
-	"Sat"
-};
-
 struct segs_seven {
 	GBitmap *horizontal;
 	GBitmap *vertical;
@@ -117,13 +107,15 @@ static void update_date_layer(Layer *this, GContext *ctx)
 {
 	int d, i;
 	char date[6]="Hello";
+	char day[4];
 
 	char *digit;
 	struct segs_fourteen *sf;
 	GBitmap *seg;
 
 	if (now!=NULL) {
-		snprintf(date, 7, "%s%2d", datestr[now->tm_wday], now->tm_mday);
+		strftime((char *)&day, 4, "%a", now);
+		snprintf(date, 7, "%s%2d", day, now->tm_mday);
 	}
 
 	/*       0
@@ -325,6 +317,8 @@ static void init()
 		.load = window_main_load,
 		.unload = window_main_unload
 	};
+
+	setlocale(LC_ALL, "");
 
 	window_main = window_create();
 
