@@ -38,6 +38,8 @@ struct {
 	struct segs_fourteen fourteen_dark;
 } segs;
 
+static int8_t charge=0;
+static bool bluetooth=false;
 static bool halftone=true;
 static bool blink=false;
 static bool blink_enable=true;
@@ -124,6 +126,18 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 	}
 }
 
+static void bluetooth_handler(bool connected)
+{
+	bluetooth=connected;
+	layer_mark_dirty(info_layer);
+}
+
+static void battery_handler(BatteryChargeState state)
+{
+	charge=state.charge_percent;
+	layer_mark_dirty(info_layer);
+}
+
 /*       0
  * 1  2  3  4  5
  *    6     7
@@ -197,6 +211,8 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 static void update_info_layer(Layer *this, GContext *ctx)
 {
 	char data[6]="World";
+
+	snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
 
 	draw_fourteen_segment(ctx, data);
 }
@@ -389,7 +405,18 @@ static void init()
 
 	window_set_background_color(window_main, GColorBlack);
 
+	/* listen for ticks */
 	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
+
+	/* listen for bluetooth updates */
+	bluetooth_connection_service_subscribe(bluetooth_handler);
+	bluetooth=bluetooth_connection_service_peek();
+
+	/* listen for battery state changes */
+	battery_state_service_subscribe(battery_handler);
+
+	BatteryChargeState state=battery_state_service_peek();
+	charge=state.charge_percent;
 
 	app_message_register_inbox_received(message_in_handler);
 	app_message_open(64, 64);
@@ -400,6 +427,8 @@ static void deinit()
 	window_destroy(window_main);
 	app_message_deregister_callbacks();
 	tick_timer_service_unsubscribe();
+	bluetooth_connection_service_unsubscribe();
+	battery_state_service_unsubscribe();
 	free(now);
 }
 
