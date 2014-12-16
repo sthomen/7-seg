@@ -10,7 +10,8 @@ static InverterLayer *invert_layer;
 
 enum {	/* these must match constants in appinfo */
 	CONFIG_INVERT = 0,
-	CONFIG_HALFTONE = 1
+	CONFIG_HALFTONE = 1,
+	CONFIG_BLINK = 2
 };
 
 struct segs_seven {
@@ -38,16 +39,19 @@ struct {
 
 static bool halftone=true;
 static bool blink=false;
+static bool blink_enable=true;
 struct tm *now=NULL;
 
-static void set_invert(bool which) {
+static void set_invert(bool which)
+{
 	layer_set_hidden(inverter_layer_get_layer(invert_layer), !which);	// because the layer inverts
 	layer_mark_dirty(inverter_layer_get_layer(invert_layer));
 
 	persist_write_int(CONFIG_INVERT, (which ? 1 : 0));
 }
 
-static void set_halftone(bool which) {
+static void set_halftone(bool which)
+{
 	halftone=which;
 
 	layer_mark_dirty(colon_layer);
@@ -57,6 +61,14 @@ static void set_halftone(bool which) {
 	persist_write_int(CONFIG_HALFTONE, (which ? 0 : 1));
 }
 
+static void set_blink(bool which)
+{
+	blink_enable=which;
+	blink=true;
+	layer_mark_dirty(colon_layer);
+
+	persist_write_int(CONFIG_BLINK, (which ? 0 : 1));
+}
 
 static void message_in_handler(DictionaryIterator *iter, void *context)
 {
@@ -80,6 +92,13 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 					set_halftone(false);
 				}
 				break;
+			case CONFIG_BLINK:
+				DEBUG_INFO("BLINK: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_blink(true);
+				} else {
+					set_blink(false);
+				}
 		}
 		t=dict_read_next(iter);
 	}
@@ -93,7 +112,8 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 		case MINUTE_UNIT:
 			layer_mark_dirty(time_layer);
 		case SECOND_UNIT:
-			layer_mark_dirty(colon_layer);
+			if (blink_enable)
+				layer_mark_dirty(colon_layer);
 			break;
 		case DAY_UNIT:
 			layer_mark_dirty(date_layer);
@@ -279,6 +299,8 @@ static void window_main_load(Window *window)
 
 	set_halftone((persist_read_int(CONFIG_HALFTONE)==0 ? true : false));
 
+	set_blink((persist_read_int(CONFIG_BLINK)==0 ? true : false));
+
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
 	segs.seven_dark.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_DARK_SEGMENT);
@@ -354,9 +376,9 @@ static void init()
 
 static void deinit()
 {
-	tick_timer_service_unsubscribe();
 	window_destroy(window_main);
 	app_message_deregister_callbacks();
+	tick_timer_service_unsubscribe();
 	free(now);
 }
 

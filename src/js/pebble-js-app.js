@@ -4,7 +4,7 @@ Pebble.addEventListener('showConfiguration',
 	function(e) {
 		var config=localStorage.getItem("config");
 		if (config==null) {
-			config=JSON.stringify({"halftone":true, "invert":false});
+			config=JSON.stringify({"halftone":true, "invert":false, "blink": true});
 		}
 		var query=encodeURIComponent(config);
 		console.log(query);
@@ -30,7 +30,7 @@ Pebble.addEventListener('webviewclosed',
 			localStorage.clear();
 			localStorage.setItem("config", JSON.stringify(config));
 
-			Pebble.sendAppMessage({'invert': config.invert, 'halftone': config.halftone});
+			Pebble.sendAppMessage(config);
 		}
 	}
 );

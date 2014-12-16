@@ -11,7 +11,8 @@
   },
   "appKeys": {
     "invert": 0,
-    "halftone": 1
+    "halftone": 1,
+    "blink": 2
   },
   "resources": {
     "media": [
