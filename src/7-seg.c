@@ -305,6 +305,25 @@ static void window_main_load(Window *window)
 
 static void window_main_unload(Window *window)
 {
+	gbitmap_destroy(segs.seven.horizontal);
+	gbitmap_destroy(segs.seven.vertical);
+	gbitmap_destroy(segs.seven_dark.horizontal);
+	gbitmap_destroy(segs.seven_dark.vertical);
+
+	gbitmap_destroy(segs.fourteen.top);
+	gbitmap_destroy(segs.fourteen.side);
+	gbitmap_destroy(segs.fourteen.diagonal_left);
+	gbitmap_destroy(segs.fourteen.diagonal_right);
+	gbitmap_destroy(segs.fourteen.vertical);
+	gbitmap_destroy(segs.fourteen.horizontal);
+
+	gbitmap_destroy(segs.fourteen_dark.top);
+	gbitmap_destroy(segs.fourteen_dark.side);
+	gbitmap_destroy(segs.fourteen_dark.diagonal_left);
+	gbitmap_destroy(segs.fourteen_dark.diagonal_right);
+	gbitmap_destroy(segs.fourteen_dark.vertical);
+	gbitmap_destroy(segs.fourteen_dark.horizontal);
+
 	layer_destroy(time_layer);
 	layer_destroy(colon_layer);
 	layer_destroy(date_layer);
