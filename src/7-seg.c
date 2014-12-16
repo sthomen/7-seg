@@ -357,6 +357,7 @@ static void deinit()
 	tick_timer_service_unsubscribe();
 	window_destroy(window_main);
 	app_message_deregister_callbacks();
+	free(now);
 }
 
 int main(void) {
