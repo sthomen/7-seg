@@ -6,6 +6,7 @@ static Window *window_main;
 static Layer *time_layer;
 static Layer *colon_layer;
 static Layer *date_layer;
+static Layer *info_layer;
 static InverterLayer *invert_layer;
 
 enum {	/* these must match constants in appinfo */
@@ -123,34 +124,27 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 	}
 }
 
-static void update_date_layer(Layer *this, GContext *ctx)
+/*       0
+ * 1  2  3  4  5
+ *    6     7
+ * 8  9 10 11 12
+ *      13
+ */
+
+static void draw_fourteen_segment(GContext *ctx, char *string)
 {
 	int d, i;
-	char date[6]="Hello";
-	char day[4];
 
 	char *digit;
 	struct segs_fourteen *sf;
 	GBitmap *seg;
-
-	if (now!=NULL) {
-		strftime((char *)&day, 4, "%a", now);
-		snprintf(date, 7, "%s%2d", day, now->tm_mday);
-	}
-
-	/*       0
-	 * 1  2  3  4  5
-	 *    6     7
-	 * 8  9 10 11 12
-	 *      13
-	 */
-
+	
 	int choffsets[5]={3,31,59,87,115};
 	int hoffsets[14]={2,0,4,11,15,22,2,13,0,4,11,15,22,2};
 	int voffsets[14]={0,2,4,4,4,2,11,11,13,15,13,15,13,22};
 
 	for (d=0;d<5;d++) {
-		digit=get_14seg(date[d]);
+		digit=get_14seg(string[d]);
 		if (digit==NULL)
 			return;
 
@@ -198,6 +192,26 @@ static void update_date_layer(Layer *this, GContext *ctx)
 					seg->bounds.size.w,seg->bounds.size.h));
 		}
 	}
+}
+
+static void update_info_layer(Layer *this, GContext *ctx)
+{
+	char data[6]="World";
+
+	draw_fourteen_segment(ctx, data);
+}
+
+static void update_date_layer(Layer *this, GContext *ctx)
+{
+	char date[6]="Hello";
+	char day[4];
+
+	if (now!=NULL) {
+		strftime((char *)&day, 4, "%a", now);
+		snprintf(date, 7, "%s%2d", day, now->tm_mday);
+	}
+
+	draw_fourteen_segment(ctx, date);
 }
 
 static void update_colon_layer(Layer *this, GContext *ctx)
@@ -290,6 +304,12 @@ static void window_main_load(Window *window)
 	layer_add_child(window_get_root_layer(window_main), date_layer);
 	layer_set_update_proc(date_layer, update_date_layer);
 
+	/* setup info layer */
+	info_layer = layer_create(GRect(0,133,144,25));
+
+	layer_add_child(window_get_root_layer(window_main), info_layer);
+	layer_set_update_proc(info_layer, update_info_layer);
+
 	/* inversion layer */
 	invert_layer = inverter_layer_create(GRect(0,0,144,168));
 	layer_add_child(window_get_root_layer(window_main), inverter_layer_get_layer(invert_layer));
@@ -349,6 +369,7 @@ static void window_main_unload(Window *window)
 	layer_destroy(time_layer);
 	layer_destroy(colon_layer);
 	layer_destroy(date_layer);
+	layer_destroy(info_layer);
 	layer_destroy(inverter_layer_get_layer(invert_layer));
 }
 
