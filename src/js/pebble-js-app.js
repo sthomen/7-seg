@@ -4,13 +4,13 @@ Pebble.addEventListener('showConfiguration',
 	function(e) {
 		var config=localStorage.getItem("config");
 		if (config==null) {
-			config=JSON.stringify({"halftone":true, "invert":false, "blink": true});
+			config=JSON.stringify({"halftone":true, "invert":false, "blink": true, "vibrate":false});
 		}
 		var query=encodeURIComponent(config);
 		console.log(query);
 
 		console.log("showConfiguration: " + query);
-		Pebble.openURL("http://www.thomen.fi/pebble/7-seg.html#" + query);
+		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.3.html#" + query);
 	}
 );
 

@@ -12,7 +12,8 @@ static InverterLayer *invert_layer;
 enum {	/* these must match constants in appinfo */
 	CONFIG_INVERT = 0,
 	CONFIG_HALFTONE = 1,
-	CONFIG_BLINK = 2
+	CONFIG_BLINK = 2,
+	CONFIG_VIBRATE = 3
 };
 
 struct segs_seven {
@@ -38,12 +39,20 @@ struct {
 	struct segs_fourteen fourteen_dark;
 } segs;
 
+static bool vibrate=false;
 static int8_t charge=0;
+static bool charging=false;
 static bool bluetooth=false;
 static bool halftone=true;
 static bool blink=false;
 static bool blink_enable=true;
 struct tm *now=NULL;
+
+static void set_vibrate(bool which)
+{
+	vibrate=which;
+	persist_write_int(CONFIG_INVERT, (which ? 1 : 0));
+}
 
 static void set_invert(bool which)
 {
@@ -102,6 +111,13 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 				} else {
 					set_blink(false);
 				}
+			case CONFIG_VIBRATE:
+				DEBUG_INFO("VIBRATE: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_vibrate(true);
+				} else {
+					set_vibrate(false);
+				}
 		}
 		t=dict_read_next(iter);
 	}
@@ -115,9 +131,10 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 		layer_mark_dirty(time_layer);
 	}
 
-	if (units_changed & SECOND_UNIT) {
-		if (blink_enable)
-			layer_mark_dirty(colon_layer);
+	if (units_changed & SECOND_UNIT && blink_enable) {
+		layer_mark_dirty(colon_layer);
+		if (charging)
+			layer_mark_dirty(info_layer);
 	}
 
 	if (units_changed & DAY_UNIT) {
@@ -127,6 +144,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 
 static void bluetooth_handler(bool connected)
 {
+	if (vibrate)
+		vibes_short_pulse();
+
 	bluetooth=connected;
 	layer_mark_dirty(info_layer);
 }
@@ -134,6 +154,8 @@ static void bluetooth_handler(bool connected)
 static void battery_handler(BatteryChargeState state)
 {
 	charge=state.charge_percent;
+	charging=state.is_charging;
+
 	layer_mark_dirty(info_layer);
 }
 
@@ -159,7 +181,7 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 	for (d=0;d<5;d++) {
 		digit=get_14seg(string[d]);
 		if (digit==NULL)
-			return;
+			digit=get_14seg('?');
 
 		for (i=0;i<14;i++) {
 			if (digit[i]==1) {
@@ -211,7 +233,13 @@ static void update_info_layer(Layer *this, GContext *ctx)
 {
 	char data[6]="World";
 
-	snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
+	if (now!=NULL) {
+		if (blink_enable && charging && blink) {
+			snprintf(data, 6, "  %% %c", (bluetooth ? 'B' : '-'));
+		} else {
+			snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
+		}
+	}
 
 	draw_fourteen_segment(ctx, data);
 }
@@ -222,8 +250,9 @@ static void update_date_layer(Layer *this, GContext *ctx)
 	char day[4];
 
 	if (now!=NULL) {
+		setlocale(LC_ALL, "");
 		strftime((char *)&day, 4, "%a", now);
-		snprintf(date, 7, "%s%2d", day, now->tm_mday);
+		snprintf(date, 7, "%s%s%2d", day, (strlen(day)==2 ? " " : ""), now->tm_mday);
 	}
 
 	draw_fourteen_segment(ctx, date);
@@ -236,17 +265,15 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 	if (blink) {
 		graphics_fill_rect(ctx, GRect(0,0,8,8), 0, (GCornerMask)NULL);
 		graphics_fill_rect(ctx, GRect(0,18,8,8), 0, (GCornerMask)NULL);
-
-		if (blink_enable)
-			blink=false;
 	} else {
 		if (halftone) {
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,18,12,8));
 		}
-
-		blink=true;
 	}
+
+	if (blink_enable)
+		blink=!blink;
 }
 
 static void update_time_layer(Layer *this, GContext *ctx)
@@ -256,7 +283,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 	struct segs_seven *ss;
 	GBitmap *seg;
 
-	char time[5]="LoAd";
+	char time[5]="----";
 
 	if (now!=NULL) {
 		snprintf(time, 5, "%2d%02d", (clock_is_24h_style() ? now->tm_hour : now->tm_hour % 12),
@@ -337,6 +364,8 @@ static void window_main_load(Window *window)
 
 	set_blink((persist_read_int(CONFIG_BLINK)==0 ? true : false));
 
+	set_vibrate((persist_read_int(CONFIG_VIBRATE)==0 ? false : true));
+
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
 	segs.seven_dark.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_DARK_SEGMENT);
@@ -356,9 +385,11 @@ static void window_main_load(Window *window)
 	segs.fourteen_dark.vertical = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_VERTICAL_DARK);
 	segs.fourteen_dark.horizontal = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_HORIZONTAL_DARK);
 
-	/* prep clock */
-	t=time(NULL);
-	now=localtime(&t);
+	/* prep clock, but if the phone launches us, display a message */
+	if (launch_reason()!=APP_LAUNCH_PHONE) {
+		t=time(NULL);
+		now=localtime(&t);
+	}
 }
 
 static void window_main_unload(Window *window)
@@ -395,8 +426,6 @@ static void init()
 		.load = window_main_load,
 		.unload = window_main_unload
 	};
-
-	setlocale(LC_ALL, "");
 
 	window_main = window_create();
 

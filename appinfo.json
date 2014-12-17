@@ -12,7 +12,8 @@
   "appKeys": {
     "invert": 0,
     "halftone": 1,
-    "blink": 2
+    "blink": 2,
+    "vibrate": 3
   },
   "resources": {
     "media": [
