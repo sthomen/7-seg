@@ -177,7 +177,7 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 	for (d=0;d<5;d++) {
 		digit=get_14seg(string[d]);
 		if (digit==NULL)
-			return;
+			digit=get_14seg('?');
 
 		for (i=0;i<14;i++) {
 			if (digit[i]==1) {
