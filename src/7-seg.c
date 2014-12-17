@@ -242,6 +242,7 @@ static void update_date_layer(Layer *this, GContext *ctx)
 	char day[4];
 
 	if (now!=NULL) {
+		setlocale(LC_ALL, "");
 		strftime((char *)&day, 4, "%a", now);
 		snprintf(date, 7, "%s%2d", day, now->tm_mday);
 	}
@@ -419,8 +420,6 @@ static void init()
 		.load = window_main_load,
 		.unload = window_main_unload
 	};
-
-	setlocale(LC_ALL, "");
 
 	window_main = window_create();
 
