@@ -235,11 +235,10 @@ static void update_info_layer(Layer *this, GContext *ctx)
 
 	if (now!=NULL) {
 		if (blink_enable && charging && blink) {
-			snprintf(data, 6, "%2d%% ", (charge==100 ? 99 : charge));
+			snprintf(data, 6, "  %% %c", (bluetooth ? 'B' : '-'));
 		} else {
-			snprintf(data, 6, "  %% ");
+			snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
 		}
-		data[5]=(bluetooth ? 'B' : '-');
 	}
 
 	draw_fourteen_segment(ctx, data);
@@ -266,17 +265,15 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 	if (blink) {
 		graphics_fill_rect(ctx, GRect(0,0,8,8), 0, (GCornerMask)NULL);
 		graphics_fill_rect(ctx, GRect(0,18,8,8), 0, (GCornerMask)NULL);
-
-		if (blink_enable)
-			blink=false;
 	} else {
 		if (halftone) {
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,18,12,8));
 		}
-
-		blink=true;
 	}
+
+	if (blink_enable)
+		blink=!blink;
 }
 
 static void update_time_layer(Layer *this, GContext *ctx)
