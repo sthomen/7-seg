@@ -244,7 +244,7 @@ static void update_date_layer(Layer *this, GContext *ctx)
 	if (now!=NULL) {
 		setlocale(LC_ALL, "");
 		strftime((char *)&day, 4, "%a", now);
-		snprintf(date, 7, "%s%2d", day, now->tm_mday);
+		snprintf(date, 7, "%s%s%2d", day, (strlen(day)==2 ? " " : ""), now->tm_mday);
 	}
 
 	draw_fourteen_segment(ctx, date);
