@@ -229,7 +229,9 @@ static void update_info_layer(Layer *this, GContext *ctx)
 {
 	char data[6]="World";
 
-	snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
+	if (now!=NULL) {
+		snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
+	}
 
 	draw_fourteen_segment(ctx, data);
 }
@@ -274,7 +276,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 	struct segs_seven *ss;
 	GBitmap *seg;
 
-	char time[5]="LoAd";
+	char time[5]="----";
 
 	if (now!=NULL) {
 		snprintf(time, 5, "%2d%02d", (clock_is_24h_style() ? now->tm_hour : now->tm_hour % 12),
@@ -376,9 +378,11 @@ static void window_main_load(Window *window)
 	segs.fourteen_dark.vertical = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_VERTICAL_DARK);
 	segs.fourteen_dark.horizontal = gbitmap_create_with_resource(RESOURCE_ID_14SEGMENT_HORIZONTAL_DARK);
 
-	/* prep clock */
-	t=time(NULL);
-	now=localtime(&t);
+	/* prep clock, but if the phone launches us, display a message */
+	if (launch_reason()!=APP_LAUNCH_PHONE) {
+		t=time(NULL);
+		now=localtime(&t);
+	}
 }
 
 static void window_main_unload(Window *window)
