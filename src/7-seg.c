@@ -41,6 +41,7 @@ struct {
 
 static bool vibrate=false;
 static int8_t charge=0;
+static bool charging=false;
 static bool bluetooth=false;
 static bool halftone=true;
 static bool blink=false;
@@ -130,9 +131,10 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 		layer_mark_dirty(time_layer);
 	}
 
-	if (units_changed & SECOND_UNIT) {
-		if (blink_enable)
-			layer_mark_dirty(colon_layer);
+	if (units_changed & SECOND_UNIT && blink_enable) {
+		layer_mark_dirty(colon_layer);
+		if (charging)
+			layer_mark_dirty(info_layer);
 	}
 
 	if (units_changed & DAY_UNIT) {
@@ -152,6 +154,8 @@ static void bluetooth_handler(bool connected)
 static void battery_handler(BatteryChargeState state)
 {
 	charge=state.charge_percent;
+	charging=state.is_charging;
+
 	layer_mark_dirty(info_layer);
 }
 
@@ -230,7 +234,12 @@ static void update_info_layer(Layer *this, GContext *ctx)
 	char data[6]="World";
 
 	if (now!=NULL) {
-		snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
+		if (blink_enable && charging && blink) {
+			snprintf(data, 6, "%2d%% ", (charge==100 ? 99 : charge));
+		} else {
+			snprintf(data, 6, "  %% ");
+		}
+		data[5]=(bluetooth ? 'B' : '-');
 	}
 
 	draw_fourteen_segment(ctx, data);
