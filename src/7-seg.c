@@ -111,18 +111,17 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {
 	now=tick_time;
 
-	switch (units_changed) {
-		case MINUTE_UNIT:
-			layer_mark_dirty(time_layer);
-		case SECOND_UNIT:
-			if (blink_enable)
-				layer_mark_dirty(colon_layer);
-			break;
-		case DAY_UNIT:
-			layer_mark_dirty(date_layer);
-			break;
-		default:
-			break;
+	if (units_changed & MINUTE_UNIT) {
+		layer_mark_dirty(time_layer);
+	}
+
+	if (units_changed & SECOND_UNIT) {
+		if (blink_enable)
+			layer_mark_dirty(colon_layer);
+	}
+
+	if (units_changed & DAY_UNIT) {
+		layer_mark_dirty(date_layer);
 	}
 }
 
@@ -238,7 +237,8 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 		graphics_fill_rect(ctx, GRect(0,0,8,8), 0, (GCornerMask)NULL);
 		graphics_fill_rect(ctx, GRect(0,18,8,8), 0, (GCornerMask)NULL);
 
-		blink=false;
+		if (blink_enable)
+			blink=false;
 	} else {
 		if (halftone) {
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
