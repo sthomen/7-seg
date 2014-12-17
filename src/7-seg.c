@@ -357,8 +357,7 @@ static void window_main_load(Window *window)
 	invert_layer = inverter_layer_create(GRect(0,0,144,168));
 	layer_add_child(window_get_root_layer(window_main), inverter_layer_get_layer(invert_layer));
 
-	/* XXX since 0 is the default if no value is set, make this the same in the js */
-	set_invert((persist_read_int(CONFIG_INVERT)==0 ? false : true));
+	set_invert((persist_read_int(CONFIG_INVERT)==0 ? true : false));
 
 	set_halftone((persist_read_int(CONFIG_HALFTONE)==0 ? true : false));
 
