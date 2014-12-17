@@ -51,15 +51,15 @@ struct tm *now=NULL;
 static void set_vibrate(bool which)
 {
 	vibrate=which;
-	persist_write_int(CONFIG_INVERT, (which ? 1 : 0));
+	persist_write_bool(CONFIG_VIBRATE, which);
 }
 
 static void set_invert(bool which)
 {
-	layer_set_hidden(inverter_layer_get_layer(invert_layer), !which);	// because the layer inverts
+	layer_set_hidden(inverter_layer_get_layer(invert_layer), !which);
 	layer_mark_dirty(inverter_layer_get_layer(invert_layer));
 
-	persist_write_int(CONFIG_INVERT, (which ? 1 : 0));
+	persist_write_bool(CONFIG_INVERT, which);
 }
 
 static void set_halftone(bool which)
@@ -70,7 +70,7 @@ static void set_halftone(bool which)
 	layer_mark_dirty(time_layer);
 	layer_mark_dirty(date_layer);
 
-	persist_write_int(CONFIG_HALFTONE, (which ? 0 : 1));
+	persist_write_bool(CONFIG_HALFTONE, !which);
 }
 
 static void set_blink(bool which)
@@ -79,7 +79,7 @@ static void set_blink(bool which)
 	blink=true;
 	layer_mark_dirty(colon_layer);
 
-	persist_write_int(CONFIG_BLINK, (which ? 0 : 1));
+	persist_write_bool(CONFIG_BLINK, !which);
 }
 
 static void message_in_handler(DictionaryIterator *iter, void *context)
@@ -131,9 +131,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 		layer_mark_dirty(time_layer);
 	}
 
-	if (units_changed & SECOND_UNIT && blink_enable) {
+	if (units_changed & SECOND_UNIT) {
 		layer_mark_dirty(colon_layer);
-		if (charging)
+		if (blink_enable && charging)
 			layer_mark_dirty(info_layer);
 	}
 
@@ -327,6 +327,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 
 static void window_main_load(Window *window)
 {
+	int32_t tmp;
 	time_t t;
 
 	/* setup time layer */
@@ -357,13 +358,13 @@ static void window_main_load(Window *window)
 	invert_layer = inverter_layer_create(GRect(0,0,144,168));
 	layer_add_child(window_get_root_layer(window_main), inverter_layer_get_layer(invert_layer));
 
-	set_invert((persist_read_int(CONFIG_INVERT)==0 ? true : false));
+	set_vibrate(persist_read_bool(CONFIG_VIBRATE));
 
-	set_halftone((persist_read_int(CONFIG_HALFTONE)==0 ? true : false));
+	set_invert(persist_read_bool(CONFIG_INVERT));
 
-	set_blink((persist_read_int(CONFIG_BLINK)==0 ? true : false));
+	set_halftone(!persist_read_bool(CONFIG_HALFTONE));
 
-	set_vibrate((persist_read_int(CONFIG_VIBRATE)==0 ? false : true));
+	set_blink(!persist_read_bool(CONFIG_BLINK));
 
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
