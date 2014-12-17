@@ -12,7 +12,8 @@ static InverterLayer *invert_layer;
 enum {	/* these must match constants in appinfo */
 	CONFIG_INVERT = 0,
 	CONFIG_HALFTONE = 1,
-	CONFIG_BLINK = 2
+	CONFIG_BLINK = 2,
+	CONFIG_VIBRATE = 3
 };
 
 struct segs_seven {
@@ -38,12 +39,19 @@ struct {
 	struct segs_fourteen fourteen_dark;
 } segs;
 
+static bool vibrate=false;
 static int8_t charge=0;
 static bool bluetooth=false;
 static bool halftone=true;
 static bool blink=false;
 static bool blink_enable=true;
 struct tm *now=NULL;
+
+static void set_vibrate(bool which)
+{
+	vibrate=which;
+	persist_write_int(CONFIG_INVERT, (which ? 1 : 0));
+}
 
 static void set_invert(bool which)
 {
@@ -102,6 +110,13 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 				} else {
 					set_blink(false);
 				}
+			case CONFIG_VIBRATE:
+				DEBUG_INFO("VIBRATE: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_vibrate(true);
+				} else {
+					set_vibrate(false);
+				}
 		}
 		t=dict_read_next(iter);
 	}
@@ -127,6 +142,9 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 
 static void bluetooth_handler(bool connected)
 {
+	if (vibrate)
+		vibes_short_pulse();
+
 	bluetooth=connected;
 	layer_mark_dirty(info_layer);
 }
@@ -336,6 +354,8 @@ static void window_main_load(Window *window)
 	set_halftone((persist_read_int(CONFIG_HALFTONE)==0 ? true : false));
 
 	set_blink((persist_read_int(CONFIG_BLINK)==0 ? true : false));
+
+	set_vibrate((persist_read_int(CONFIG_VIBRATE)==0 ? false : true));
 
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
