@@ -1,5 +1,3 @@
-/* This code is automatically regenerated from  */
-
 struct {
 	char character;
 	char data[14];
@@ -73,3 +71,4 @@ struct {
 	{ '?', {1,1,0,0,0,1,0,1,0,0,1,0,0,1,} },
 };
 #define SEGXIV_MAX 67
+/* Note: This header is auto-generated from 14seg.raw */

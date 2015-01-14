@@ -1,7 +1,6 @@
 BEGIN {
 	FS=""
 	print \
-"/* This code is automatically regenerated from " FILENAME " */\n\n"\
 "struct {\n"\
 "	char character;\n"\
 "	char data[14];\n"\
@@ -27,6 +26,7 @@ END {
 	print "};";
 
 	print "#define SEGXIV_MAX " lines;
+	print "/* Note: This header is auto-generated from " FILENAME " */";
 }
 
 function print_line(char, line, comma) {

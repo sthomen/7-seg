@@ -13,7 +13,9 @@ enum {	/* these must match constants in appinfo */
 	CONFIG_INVERT = 0,
 	CONFIG_HALFTONE = 1,
 	CONFIG_BLINK = 2,
-	CONFIG_VIBRATE = 3
+	CONFIG_VIBRATE = 3,
+	CONFIG_SHOWDATE = 4,
+	CONFIG_SHOWINFO = 5
 };
 
 struct segs_seven {
@@ -46,6 +48,8 @@ static bool bluetooth=false;
 static bool halftone=true;
 static bool blink=false;
 static bool blink_enable=true;
+static bool showdate=true;
+static bool showinfo=true;
 struct tm *now=NULL;
 
 static void set_vibrate(bool which)
@@ -53,6 +57,21 @@ static void set_vibrate(bool which)
 	vibrate=which;
 	persist_write_bool(CONFIG_VIBRATE, which);
 }
+
+static void set_showdate(bool which)
+{
+	showdate=which;
+	persist_write_bool(CONFIG_SHOWDATE, !which);
+	layer_mark_dirty(date_layer);
+}
+
+static void set_showinfo(bool which)
+{
+	showinfo=which;
+	persist_write_bool(CONFIG_SHOWINFO, !which);
+	layer_mark_dirty(info_layer);
+}
+
 
 static void set_invert(bool which)
 {
@@ -69,6 +88,7 @@ static void set_halftone(bool which)
 	layer_mark_dirty(colon_layer);
 	layer_mark_dirty(time_layer);
 	layer_mark_dirty(date_layer);
+	layer_mark_dirty(info_layer);
 
 	persist_write_bool(CONFIG_HALFTONE, !which);
 }
@@ -111,6 +131,7 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 				} else {
 					set_blink(false);
 				}
+				break;
 			case CONFIG_VIBRATE:
 				DEBUG_INFO("VIBRATE: %s", t->value->cstring);
 				if (strcmp(t->value->cstring, "true")==0) {
@@ -118,6 +139,23 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 				} else {
 					set_vibrate(false);
 				}
+				break;
+			case CONFIG_SHOWDATE:
+				DEBUG_INFO("SHOWDATE: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_showdate(true);
+				} else {
+					set_showdate(false);
+				}
+				break;
+			case CONFIG_SHOWINFO:
+				DEBUG_INFO("SHOWINFO: %s", t->value->cstring);
+				if (strcmp(t->value->cstring, "true")==0) {
+					set_showinfo(true);
+				} else {
+					set_showinfo(false);
+				}
+				break;
 		}
 		t=dict_read_next(iter);
 	}
@@ -231,6 +269,9 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 
 static void update_info_layer(Layer *this, GContext *ctx)
 {
+	if (!showinfo)
+		return;
+
 	char data[6]="World";
 
 	if (now!=NULL) {
@@ -246,6 +287,9 @@ static void update_info_layer(Layer *this, GContext *ctx)
 
 static void update_date_layer(Layer *this, GContext *ctx)
 {
+	if (!showdate)
+		return;
+
 	char date[6]="Hello";
 	char day[4];
 
@@ -327,7 +371,6 @@ static void update_time_layer(Layer *this, GContext *ctx)
 
 static void window_main_load(Window *window)
 {
-	int32_t tmp;
 	time_t t;
 
 	/* setup time layer */
@@ -365,6 +408,9 @@ static void window_main_load(Window *window)
 	set_halftone(!persist_read_bool(CONFIG_HALFTONE));
 
 	set_blink(!persist_read_bool(CONFIG_BLINK));
+
+	set_showdate(!persist_read_bool(CONFIG_SHOWDATE));
+	set_showinfo(!persist_read_bool(CONFIG_SHOWINFO));
 
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
