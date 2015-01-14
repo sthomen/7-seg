@@ -4,8 +4,8 @@
   "longName": "7 Segment Display",
   "capabilities": [ "configurable" ],
   "companyName": "Staffan Thomen",
-  "versionCode": 5,
-  "versionLabel": "1.4",
+  "versionCode": 6,
+  "versionLabel": "1.5",
   "watchapp": {
     "watchface": true
   },
