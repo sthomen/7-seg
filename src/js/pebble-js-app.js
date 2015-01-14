@@ -1,5 +1,5 @@
 var initialized = false;
-var defaults=JSON.stringify({"halftone":true, "invert":false, "blink": true, "vibrate":false});
+var defaults=JSON.stringify({"halftone":true, "invert":false, "blink": true, "vibrate":false, "showtop":true, "showbottom":true});
 
 Pebble.addEventListener('showConfiguration',
 	function(e) {
@@ -11,7 +11,7 @@ Pebble.addEventListener('showConfiguration',
 		console.log(query);
 
 		console.log("showConfiguration: " + query);
-		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.4.html#" + query);
+		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.5.html#" + query);
 	}
 );
 

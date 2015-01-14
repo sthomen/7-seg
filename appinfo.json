@@ -13,7 +13,9 @@
     "invert": 0,
     "halftone": 1,
     "blink": 2,
-    "vibrate": 3
+    "vibrate": 3,
+    "showdate": 4,
+    "showinfo": 5
   },
   "resources": {
     "media": [
