@@ -211,6 +211,7 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 	char *digit;
 	struct segs_fourteen *sf;
 	GBitmap *seg;
+	GRect bounds;
 	
 	int choffsets[5]={3,31,59,87,115};
 	int hoffsets[14]={2,0,4,11,15,22,2,13,0,4,11,15,22,2};
@@ -260,9 +261,11 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 					break;
 			}
 
+			bounds=gbitmap_get_bounds(seg);
+
 			graphics_draw_bitmap_in_rect(ctx, seg,
 				GRect(choffsets[d]+hoffsets[i],voffsets[i],
-					seg->bounds.size.w,seg->bounds.size.h));
+					bounds.size.w,bounds.size.h));
 		}
 	}
 }
@@ -326,6 +329,7 @@ static void update_time_layer(Layer *this, GContext *ctx)
 	char *digit;
 	struct segs_seven *ss;
 	GBitmap *seg;
+	GRect bounds;
 
 	char time[5]="----";
 
@@ -361,9 +365,10 @@ static void update_time_layer(Layer *this, GContext *ctx)
 					seg=ss->vertical;
 				}
 				if (!(i==0 && (j==0 || j==2)))
+					bounds=gbitmap_get_bounds(seg);
 					graphics_draw_bitmap_in_rect(ctx, seg,
 						GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
-							seg->bounds.size.w,seg->bounds.size.h));
+							bounds.size.w,bounds.size.h));
 			}
 		}
 	}
