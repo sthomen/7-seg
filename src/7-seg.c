@@ -364,11 +364,12 @@ static void update_time_layer(Layer *this, GContext *ctx)
 				} else {
 					seg=ss->vertical;
 				}
-				if (!(i==0 && (j==0 || j==2)))
+				if (!(i==0 && (j==0 || j==2))) {
 					bounds=gbitmap_get_bounds(seg);
 					graphics_draw_bitmap_in_rect(ctx, seg,
 						GRect(choffsets[d]+hoffsets[j],voffsets[j+(i*3)],
 							bounds.size.w,bounds.size.h));
+				}
 			}
 		}
 	}
