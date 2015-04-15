@@ -14,8 +14,8 @@ enum {	/* these must match constants in appinfo */
 	CONFIG_HALFTONE = 1,
 	CONFIG_BLINK = 2,
 	CONFIG_VIBRATE = 3,
-	CONFIG_SHOWDATE = 4,
-	CONFIG_SHOWINFO = 5
+	CONFIG_SHOWTOP = 4,
+	CONFIG_SHOWBOTTOM = 5
 };
 
 struct segs_seven {
@@ -41,34 +41,47 @@ struct {
 	struct segs_fourteen fourteen_dark;
 } segs;
 
-static bool vibrate=false;
 static int8_t charge=0;
+
+struct {
+	bool vibrate;
+	bool bluetooth;
+	bool halftone;
+	bool invert;
+	bool blink;
+	bool showtop;
+	bool showbottom;
+} settings = {		/* defaults, make sure these match the JS file */
+	true,
+	true,
+	true,
+	true,
+	true,
+	true,
+	true
+};
+
 static bool charging=false;
-static bool bluetooth=false;
-static bool halftone=true;
-static bool blink=false;
-static bool blink_enable=true;
-static bool showdate=true;
-static bool showinfo=true;
+static bool blink=true;
 struct tm *now=NULL;
 
 static void set_vibrate(bool which)
 {
-	vibrate=which;
+	settings.vibrate=which;
 	persist_write_bool(CONFIG_VIBRATE, which);
 }
 
-static void set_showdate(bool which)
+static void set_showtop(bool which)
 {
-	showdate=which;
-	persist_write_bool(CONFIG_SHOWDATE, !which);
+	settings.showtop=which;
+	persist_write_bool(CONFIG_SHOWTOP, which);
 	layer_mark_dirty(date_layer);
 }
 
-static void set_showinfo(bool which)
+static void set_showbottom(bool which)
 {
-	showinfo=which;
-	persist_write_bool(CONFIG_SHOWINFO, !which);
+	settings.showbottom=which;
+	persist_write_bool(CONFIG_SHOWBOTTOM, which);
 	layer_mark_dirty(info_layer);
 }
 
@@ -83,23 +96,23 @@ static void set_invert(bool which)
 
 static void set_halftone(bool which)
 {
-	halftone=which;
+	settings.halftone=which;
 
 	layer_mark_dirty(colon_layer);
 	layer_mark_dirty(time_layer);
 	layer_mark_dirty(date_layer);
 	layer_mark_dirty(info_layer);
 
-	persist_write_bool(CONFIG_HALFTONE, !which);
+	persist_write_bool(CONFIG_HALFTONE, which);
 }
 
 static void set_blink(bool which)
 {
-	blink_enable=which;
+	settings.blink=which;
 	blink=true;
 	layer_mark_dirty(colon_layer);
 
-	persist_write_bool(CONFIG_BLINK, !which);
+	persist_write_bool(CONFIG_BLINK, which);
 }
 
 static void message_in_handler(DictionaryIterator *iter, void *context)
@@ -140,20 +153,20 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 					set_vibrate(false);
 				}
 				break;
-			case CONFIG_SHOWDATE:
-				DEBUG_INFO("SHOWDATE: %s", t->value->cstring);
+			case CONFIG_SHOWTOP:
+				DEBUG_INFO("SHOWTOP: %s", t->value->cstring);
 				if (strcmp(t->value->cstring, "true")==0) {
-					set_showdate(true);
+					set_showtop(true);
 				} else {
-					set_showdate(false);
+					set_showtop(false);
 				}
 				break;
-			case CONFIG_SHOWINFO:
-				DEBUG_INFO("SHOWINFO: %s", t->value->cstring);
+			case CONFIG_SHOWBOTTOM:
+				DEBUG_INFO("SHOWBOTTOM: %s", t->value->cstring);
 				if (strcmp(t->value->cstring, "true")==0) {
-					set_showinfo(true);
+					set_showbottom(true);
 				} else {
-					set_showinfo(false);
+					set_showbottom(false);
 				}
 				break;
 		}
@@ -171,7 +184,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 
 	if (units_changed & SECOND_UNIT) {
 		layer_mark_dirty(colon_layer);
-		if (blink_enable && charging)
+		if (settings.blink && charging)
 			layer_mark_dirty(info_layer);
 	}
 
@@ -182,10 +195,10 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 
 static void bluetooth_handler(bool connected)
 {
-	if (vibrate)
+	if (settings.vibrate)
 		vibes_short_pulse();
 
-	bluetooth=connected;
+	settings.bluetooth=connected;
 	layer_mark_dirty(info_layer);
 }
 
@@ -226,7 +239,7 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 			if (digit[i]==1) {
 				sf=&segs.fourteen;
 			} else {
-				if (!halftone) {
+				if (!settings.halftone) {
 					continue;
 				}
 				sf=&segs.fourteen_dark;
@@ -272,16 +285,16 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 
 static void update_info_layer(Layer *this, GContext *ctx)
 {
-	if (!showinfo)
+	if (!settings.showbottom)
 		return;
 
 	char data[6]="World";
 
 	if (now!=NULL) {
-		if (blink_enable && charging && blink) {
-			snprintf(data, 6, "  %% %c", (bluetooth ? 'B' : '-'));
+		if (settings.blink && charging && blink) {
+			snprintf(data, 6, "  %% %c", (settings.bluetooth ? 'B' : '-'));
 		} else {
-			snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (bluetooth ? 'B' : '-'));
+			snprintf(data, 6, "%2d%% %c", (charge==100 ? 99 : charge), (settings.bluetooth ? 'B' : '-'));
 		}
 	}
 
@@ -290,7 +303,7 @@ static void update_info_layer(Layer *this, GContext *ctx)
 
 static void update_date_layer(Layer *this, GContext *ctx)
 {
-	if (!showdate)
+	if (!settings.showtop)
 		return;
 
 	char date[6]="Hello";
@@ -313,13 +326,13 @@ static void update_colon_layer(Layer *this, GContext *ctx)
 		graphics_fill_rect(ctx, GRect(0,0,8,8), 0, (GCornerMask)NULL);
 		graphics_fill_rect(ctx, GRect(0,18,8,8), 0, (GCornerMask)NULL);
 	} else {
-		if (halftone) {
+		if (settings.halftone) {
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,0,12,8));
 			graphics_draw_bitmap_in_rect(ctx, segs.seven_dark.horizontal, GRect(-4,18,12,8));
 		}
 	}
 
-	if (blink_enable)
+	if (settings.blink)
 		blink=!blink;
 }
 
@@ -354,9 +367,9 @@ static void update_time_layer(Layer *this, GContext *ctx)
 				if (digit[j+(i*3)]==1) {
 					ss=&segs.seven;
 				} else {
-					if (!halftone) {
+					if (!settings.halftone)
 						continue;
-					}
+
 					ss=&segs.seven_dark;
 				}
 				if (j==1) {
@@ -373,6 +386,15 @@ static void update_time_layer(Layer *this, GContext *ctx)
 			}
 		}
 	}
+}
+
+static bool read_bool(const uint32_t which, bool def)
+{
+	if (persist_exists(which)) {
+		return persist_read_bool(which);
+	}
+
+	return def;
 }
 
 static void window_main_load(Window *window)
@@ -407,16 +429,15 @@ static void window_main_load(Window *window)
 	invert_layer = inverter_layer_create(GRect(0,0,144,168));
 	layer_add_child(window_get_root_layer(window_main), inverter_layer_get_layer(invert_layer));
 
-	set_vibrate(persist_read_bool(CONFIG_VIBRATE));
 
-	set_invert(persist_read_bool(CONFIG_INVERT));
+	/* set persistent values */
 
-	set_halftone(!persist_read_bool(CONFIG_HALFTONE));
-
-	set_blink(!persist_read_bool(CONFIG_BLINK));
-
-	set_showdate(!persist_read_bool(CONFIG_SHOWDATE));
-	set_showinfo(!persist_read_bool(CONFIG_SHOWINFO));
+	set_vibrate(read_bool(CONFIG_VIBRATE, settings.vibrate));
+	set_invert(read_bool(CONFIG_INVERT, settings.invert));
+	set_halftone(read_bool(CONFIG_HALFTONE, settings.halftone));
+	set_blink(read_bool(CONFIG_BLINK, settings.blink));
+	set_showtop(read_bool(CONFIG_SHOWTOP, settings.showtop));
+	set_showbottom(read_bool(CONFIG_SHOWBOTTOM, settings.showbottom));
 
 	segs.seven.horizontal = gbitmap_create_with_resource(RESOURCE_ID_HORIZONTAL_SEGMENT);
 	segs.seven.vertical = gbitmap_create_with_resource(RESOURCE_ID_VERTICAL_SEGMENT);
@@ -491,7 +512,7 @@ static void init()
 
 	/* listen for bluetooth updates */
 	bluetooth_connection_service_subscribe(bluetooth_handler);
-	bluetooth=bluetooth_connection_service_peek();
+	settings.bluetooth=bluetooth_connection_service_peek();
 
 	/* listen for battery state changes */
 	battery_state_service_subscribe(battery_handler);
