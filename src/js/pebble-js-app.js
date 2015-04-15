@@ -18,7 +18,7 @@ Pebble.addEventListener('showConfiguration',
 		console.log(query);
 
 		console.log("showConfiguration: " + query);
-		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.5.html#" + query);
+		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.8.html#" + query);
 	}
 );
 
