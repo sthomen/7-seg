@@ -1,5 +1,12 @@
 var initialized = false;
-var defaults=JSON.stringify({"halftone":true, "invert":false, "blink": true, "vibrate":false, "showtop":true, "showbottom":true});
+var defaults=JSON.stringify({
+	"halftone":	true,
+	"invert":	true,
+	"blink":	true,
+	"vibrate":	true,
+	"showtop":	true,
+	"showbottom":	true
+});
 
 Pebble.addEventListener('showConfiguration',
 	function(e) {
