@@ -7,7 +7,9 @@ static Layer *time_layer;
 static Layer *colon_layer;
 static Layer *date_layer;
 static Layer *info_layer;
-static InverterLayer *invert_layer;
+
+static GColor foreground;
+static GColor background;
 
 enum {	/* these must match constants in appinfo */
 	CONFIG_INVERT = 0,
@@ -34,7 +36,7 @@ struct segs_fourteen {
 	GBitmap *horizontal;
 };
 
-struct {
+static struct {
 	struct segs_seven seven;
 	struct segs_seven seven_dark;
 	struct segs_fourteen fourteen;
@@ -43,7 +45,7 @@ struct {
 
 static int8_t charge=0;
 
-struct {
+static struct {
 	bool vibrate;
 	bool bluetooth;
 	bool halftone;
@@ -63,7 +65,7 @@ struct {
 
 static bool charging=false;
 static bool blink=true;
-struct tm *now=NULL;
+static struct tm now;
 
 static void set_vibrate(bool which)
 {
@@ -85,17 +87,14 @@ static void set_showbottom(bool which)
 	layer_mark_dirty(info_layer);
 }
 
-
 static void set_invert(bool which)
 {
-	layer_set_hidden(inverter_layer_get_layer(invert_layer), !which);
-	layer_mark_dirty(inverter_layer_get_layer(invert_layer));
-
 	persist_write_bool(CONFIG_INVERT, which);
 }
 
 static void set_halftone(bool which)
 {
+
 	settings.halftone=which;
 
 	layer_mark_dirty(colon_layer);
@@ -108,6 +107,7 @@ static void set_halftone(bool which)
 
 static void set_blink(bool which)
 {
+
 	settings.blink=which;
 	blink=true;
 	layer_mark_dirty(colon_layer);
@@ -120,54 +120,27 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 	Tuple *t = dict_read_first(iter);
 
 	while (t != NULL) {
+		DEBUG_INFO("message_in_handler: %d type %d", (int)t->key, t->type);
+		DEBUG_INFO("%d", t->value->int8);
+
 		switch (t->key) {
 			case CONFIG_INVERT:
-				DEBUG_INFO("INVERT: %s", t->value->cstring);
-				if (strcmp(t->value->cstring, "true")==0) {
-					set_invert(true);
-				} else {
-					set_invert(false);
-				}
+				set_invert(t->value->int8==1);
 				break;
 			case CONFIG_HALFTONE:
-				DEBUG_INFO("HALFTONE: %s", t->value->cstring);
-				if (strcmp(t->value->cstring, "true")==0) {
-					set_halftone(true);
-				} else {
-					set_halftone(false);
-				}
+				set_halftone(t->value->int8==1);
 				break;
 			case CONFIG_BLINK:
-				DEBUG_INFO("BLINK: %s", t->value->cstring);
-				if (strcmp(t->value->cstring, "true")==0) {
-					set_blink(true);
-				} else {
-					set_blink(false);
-				}
+				set_blink(t->value->int8==1);
 				break;
 			case CONFIG_VIBRATE:
-				DEBUG_INFO("VIBRATE: %s", t->value->cstring);
-				if (strcmp(t->value->cstring, "true")==0) {
-					set_vibrate(true);
-				} else {
-					set_vibrate(false);
-				}
+				set_vibrate(t->value->int8==1);
 				break;
 			case CONFIG_SHOWTOP:
-				DEBUG_INFO("SHOWTOP: %s", t->value->cstring);
-				if (strcmp(t->value->cstring, "true")==0) {
-					set_showtop(true);
-				} else {
-					set_showtop(false);
-				}
+				set_showtop(t->value->int8==1);
 				break;
 			case CONFIG_SHOWBOTTOM:
-				DEBUG_INFO("SHOWBOTTOM: %s", t->value->cstring);
-				if (strcmp(t->value->cstring, "true")==0) {
-					set_showbottom(true);
-				} else {
-					set_showbottom(false);
-				}
+				set_showbottom(t->value->int8==1);
 				break;
 		}
 		t=dict_read_next(iter);
@@ -176,7 +149,8 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 
 static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 {
-	now=tick_time;
+
+	memcpy(&now, tick_time, sizeof(struct tm));
 
 	if (units_changed & MINUTE_UNIT) {
 		layer_mark_dirty(time_layer);
@@ -195,6 +169,7 @@ static void tick_handler(struct tm *tick_time, TimeUnits units_changed)
 
 static void bluetooth_handler(bool connected)
 {
+
 	if (settings.vibrate)
 		vibes_short_pulse();
 
@@ -204,6 +179,7 @@ static void bluetooth_handler(bool connected)
 
 static void battery_handler(BatteryChargeState state)
 {
+
 	charge=state.charge_percent;
 	charging=state.is_charging;
 
@@ -229,6 +205,7 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 	int choffsets[5]={3,31,59,87,115};
 	int hoffsets[14]={2,0,4,11,15,22,2,13,0,4,11,15,22,2};
 	int voffsets[14]={0,2,4,4,4,2,11,11,13,15,13,15,13,22};
+
 
 	for (d=0;d<5;d++) {
 		digit=get_14seg(string[d]);
@@ -285,12 +262,13 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 
 static void update_info_layer(Layer *this, GContext *ctx)
 {
+	char data[6]="World";
+
 	if (!settings.showbottom)
 		return;
 
-	char data[6]="World";
 
-	if (now!=NULL) {
+	if (now.tm_mday!=0) {
 		if (settings.blink && charging && blink) {
 			snprintf(data, 6, "  %% %c", (settings.bluetooth ? 'B' : '-'));
 		} else {
@@ -303,16 +281,16 @@ static void update_info_layer(Layer *this, GContext *ctx)
 
 static void update_date_layer(Layer *this, GContext *ctx)
 {
+	char day[4];
+	char date[6]="Hello";
+
 	if (!settings.showtop)
 		return;
 
-	char date[6]="Hello";
-	char day[4];
-
-	if (now!=NULL) {
+	if (now.tm_mday!=0) {
 		setlocale(LC_ALL, "");
-		strftime((char *)&day, 4, "%a", now);
-		snprintf(date, 7, "%s%s%2d", day, (strlen(day)==2 ? " " : ""), now->tm_mday);
+		strftime((char *)&day, 4, "%a", &now);
+		snprintf(date, 6, "%s%s%2d", day, (strlen(day)==2 ? " " : ""), now.tm_mday);
 	}
 
 	draw_fourteen_segment(ctx, date);
@@ -346,9 +324,9 @@ static void update_time_layer(Layer *this, GContext *ctx)
 
 	char time[5]="----";
 
-	if (now!=NULL) {
-		snprintf(time, 5, "%2d%02d", (clock_is_24h_style() ? now->tm_hour : now->tm_hour % 12),
-			now->tm_min);
+	if (now.tm_mday!=0) {
+		snprintf(time, 5, "%2d%02d", (clock_is_24h_style() ? now.tm_hour : now.tm_hour % 12),
+			now.tm_min);
 	}
 
 	// these are relative to the graphics layer, vertical is always 0
@@ -405,30 +383,26 @@ static void window_main_load(Window *window)
 	time_layer = layer_create(GRect(0,50,144,69));
 
 	layer_add_child(window_get_root_layer(window_main), time_layer);
-	layer_set_update_proc(time_layer, update_time_layer);
 
 	/* setup colon layer */
 	colon_layer = layer_create(GRect(68,71,8,26));
 
 	layer_add_child(window_get_root_layer(window_main), colon_layer);
-	layer_set_update_proc(colon_layer, update_colon_layer);
 
 	/* setup date layer */
 	date_layer = layer_create(GRect(0,10,144,25));
 
 	layer_add_child(window_get_root_layer(window_main), date_layer);
-	layer_set_update_proc(date_layer, update_date_layer);
 
 	/* setup info layer */
 	info_layer = layer_create(GRect(0,133,144,25));
 
 	layer_add_child(window_get_root_layer(window_main), info_layer);
+
+	layer_set_update_proc(time_layer, update_time_layer);
+	layer_set_update_proc(colon_layer, update_colon_layer);
+	layer_set_update_proc(date_layer, update_date_layer);
 	layer_set_update_proc(info_layer, update_info_layer);
-
-	/* inversion layer */
-	invert_layer = inverter_layer_create(GRect(0,0,144,168));
-	layer_add_child(window_get_root_layer(window_main), inverter_layer_get_layer(invert_layer));
-
 
 	/* set persistent values */
 
@@ -461,7 +435,7 @@ static void window_main_load(Window *window)
 	/* prep clock, but if the phone launches us, display a message */
 	if (launch_reason()!=APP_LAUNCH_PHONE) {
 		t=time(NULL);
-		now=localtime(&t);
+		memcpy(&now, localtime(&t), sizeof(struct tm));
 	}
 }
 
@@ -490,7 +464,6 @@ static void window_main_unload(Window *window)
 	layer_destroy(colon_layer);
 	layer_destroy(date_layer);
 	layer_destroy(info_layer);
-	layer_destroy(inverter_layer_get_layer(invert_layer));
 }
 
 static void init()
@@ -500,12 +473,21 @@ static void init()
 		.unload = window_main_unload
 	};
 
+#ifdef PBL_COLOR
+	background=GColorDarkGreen;
+#else
+	background=GColorWhite;
+#endif
+
+	foreground=GColorBlack;
+
+
 	window_main = window_create();
 
 	window_set_window_handlers(window_main, window_handlers);
 	window_stack_push(window_main, true);
 
-	window_set_background_color(window_main, GColorBlack);
+	window_set_background_color(window_main, background);
 
 	/* listen for ticks */
 	tick_timer_service_subscribe(SECOND_UNIT, tick_handler);
@@ -531,7 +513,6 @@ static void deinit()
 	tick_timer_service_unsubscribe();
 	bluetooth_connection_service_unsubscribe();
 	battery_state_service_unsubscribe();
-	free(now);
 }
 
 int main(void) {

@@ -14,11 +14,12 @@ Pebble.addEventListener('showConfiguration',
 		if (config==null) {
 			config=defaults;
 		}
-		var query=encodeURIComponent(config);
-		console.log(query);
 
-		console.log("showConfiguration: " + query);
-		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.5.html#" + query);
+		var query=encodeURIComponent(config);
+
+		console.log("showConfiguration: " + decodeURIComponent(query));
+
+		Pebble.openURL("http://www.thomen.fi/pebble/7-seg-1.8.html#" + query);
 	}
 );
 
@@ -32,6 +33,8 @@ Pebble.addEventListener('webviewclosed',
 	function (e) {
 		var config;
 		var result = decodeURIComponent(e.response);
+
+		console.log(result);
 
 		if (result=="cancel") {
 			return;
