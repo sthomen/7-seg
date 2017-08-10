@@ -12,7 +12,6 @@ static GColor foreground;
 static GColor background;
 
 enum {	/* these must match constants in appinfo */
-	CONFIG_INVERT = 0,
 	CONFIG_HALFTONE = 1,
 	CONFIG_BLINK = 2,
 	CONFIG_VIBRATE = 3,
@@ -49,12 +48,10 @@ static struct {
 	bool vibrate;
 	bool bluetooth;
 	bool halftone;
-	bool invert;
 	bool blink;
 	bool showtop;
 	bool showbottom;
 } settings = {		/* defaults, make sure these match the JS file */
-	true,
 	true,
 	true,
 	true,
@@ -85,11 +82,6 @@ static void set_showbottom(bool which)
 	settings.showbottom=which;
 	persist_write_bool(CONFIG_SHOWBOTTOM, which);
 	layer_mark_dirty(info_layer);
-}
-
-static void set_invert(bool which)
-{
-	persist_write_bool(CONFIG_INVERT, which);
 }
 
 static void set_halftone(bool which)
@@ -124,9 +116,6 @@ static void message_in_handler(DictionaryIterator *iter, void *context)
 		DEBUG_INFO("%d", t->value->int8);
 
 		switch (t->key) {
-			case CONFIG_INVERT:
-				set_invert(t->value->int8==1);
-				break;
 			case CONFIG_HALFTONE:
 				set_halftone(t->value->int8==1);
 				break;
@@ -206,6 +195,7 @@ static void draw_fourteen_segment(GContext *ctx, char *string)
 	int hoffsets[14]={2,0,4,11,15,22,2,13,0,4,11,15,22,2};
 	int voffsets[14]={0,2,4,4,4,2,11,11,13,15,13,15,13,22};
 
+	graphics_context_set_compositing_mode(ctx, GCompOpSet);
 
 	for (d=0;d<5;d++) {
 		digit=get_14seg(string[d]);
@@ -299,6 +289,7 @@ static void update_date_layer(Layer *this, GContext *ctx)
 static void update_colon_layer(Layer *this, GContext *ctx)
 {
 	graphics_context_set_fill_color(ctx, GColorClear);
+	graphics_context_set_compositing_mode(ctx, GCompOpSet);
 
 	if (blink) {
 		graphics_fill_rect(ctx, GRect(0,0,8,8), 0, (GCornerMask)NULL);
@@ -328,6 +319,8 @@ static void update_time_layer(Layer *this, GContext *ctx)
 		snprintf(time, 5, "%2d%02d", (clock_is_24h_style() ? now.tm_hour : now.tm_hour % 12),
 			now.tm_min);
 	}
+
+	graphics_context_set_compositing_mode(ctx, GCompOpSet);
 
 	// these are relative to the graphics layer, vertical is always 0
 	int choffsets[4]={1,34,80,113};
@@ -407,7 +400,6 @@ static void window_main_load(Window *window)
 	/* set persistent values */
 
 	set_vibrate(read_bool(CONFIG_VIBRATE, settings.vibrate));
-	set_invert(read_bool(CONFIG_INVERT, settings.invert));
 	set_halftone(read_bool(CONFIG_HALFTONE, settings.halftone));
 	set_blink(read_bool(CONFIG_BLINK, settings.blink));
 	set_showtop(read_bool(CONFIG_SHOWTOP, settings.showtop));
@@ -473,14 +465,8 @@ static void init()
 		.unload = window_main_unload
 	};
 
-#ifdef PBL_COLOR
-	background=GColorDarkGreen;
-#else
-	background=GColorWhite;
-#endif
-
-	foreground=GColorBlack;
-
+	foreground=GColorWhite;
+	background=GColorBlack;
 
 	window_main = window_create();
 
