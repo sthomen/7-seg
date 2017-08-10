@@ -1,0 +1,139 @@
+{
+  "version": "1.9",
+  "author": "Staffan Thomen",
+  "private": true,
+  "dependencies": {},
+  "keywords": [
+    "pebble-app"
+  ],
+  "pebble": {
+    "sdkVersion": "3",
+    "resources": {
+      "media": [
+        {
+          "type": "bitmap",
+          "name": "HORIZONTAL_SEGMENT",
+          "file": "horizontal_segment.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "VERTICAL_SEGMENT",
+          "file": "vertical_segment.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "HORIZONTAL_DARK_SEGMENT",
+          "file": "horizontal_dark_segment.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "VERTICAL_DARK_SEGMENT",
+          "file": "vertical_dark_segment.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_TOP",
+          "file": "small_segment_top.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_SIDE",
+          "file": "small_segment_side.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_DIAGONAL_LEFT",
+          "file": "small_segment_diagonal_left.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_DIAGONAL_RIGHT",
+          "file": "small_segment_diagonal_right.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_VERTICAL",
+          "file": "small_segment_vertical.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_HORIZONTAL",
+          "file": "small_segment_horizontal.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_TOP_DARK",
+          "file": "small_segment_top_dark.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_SIDE_DARK",
+          "file": "small_segment_side_dark.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_DIAGONAL_LEFT_DARK",
+          "file": "small_segment_diagonal_left_dark.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_DIAGONAL_RIGHT_DARK",
+          "file": "small_segment_diagonal_right_dark.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_VERTICAL_DARK",
+          "file": "small_segment_vertical_dark.png",
+          "memoryFormat": "2BitPalette"
+        },
+        {
+          "type": "bitmap",
+          "name": "14SEGMENT_HORIZONTAL_DARK",
+          "file": "small_segment_horizontal_dark.png",
+          "memoryFormat": "2BitPalette"
+        }
+      ]
+    },
+    "projectType": "native",
+    "uuid": "c15841cc-14f8-49a9-9541-d181375db705",
+    "messageKeys": {
+      "showbottom": 5,
+      "vibrate": 3,
+      "blink": 2,
+      "halftone": 1,
+      "showtop": 4
+    },
+    "enableMultiJS": false,
+    "displayName": "7 Segment Display",
+    "watchapp": {
+      "onlyShownOnCommunication": false,
+      "hiddenApp": false,
+      "watchface": true
+    },
+    "targetPlatforms": [
+      "aplite",
+      "basalt",
+      "chalk",
+      "diorite",
+      "emery"
+    ],
+    "capabilities": [
+      "configurable"
+    ]
+  },
+  "name": "7 Seg"
+}
