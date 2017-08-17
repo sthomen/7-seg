@@ -22,8 +22,6 @@ enum {	/* these must match constants in appinfo */
 struct segs_seven {
 	GBitmap *horizontal;
 	GBitmap *vertical;
-	GBitmap *horizontal_dark;
-	GBitmap *vertical_dark;
 };
 
 struct segs_fourteen {
